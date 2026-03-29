@@ -2,7 +2,11 @@ import { useState, useRef } from "react";
 import api from "../api/axios";
 
 
-export default function Timer() {
+interface TimerProps {
+    onLog: () => void;
+}
+
+export default function Timer({ onLog }: TimerProps) {
     const [time, setTime] = useState(0);
     const [activity, setActivity] = useState("");
     const [error, setError] = useState("");
@@ -56,6 +60,7 @@ export default function Timer() {
             clearInterval(intervalRef.current!);
             intervalRef.current = null;
             setError("");
+            onLog();
         } catch (err: any) {
             setError(err.response?.data?.error || "Error logoging timeblock.");
         }

@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef, type RefObject } from "react";
 import api from "../api/axios";
+
 
 interface Timeblock {
     id: number;
@@ -9,7 +10,11 @@ interface Timeblock {
     createdAt: string;
 }
 
-export default function TimeblockTable() {
+interface TimeblockProps {
+    refreshRef: RefObject<(() => void) | null>
+}
+
+export default function TimeblockTable({ refreshRef }: TimeblockProps) {
     const [timeblocks, setTimeblocks] = useState<Timeblock[]>([]);
     const [search, setSearch] = useState("");
     const [error, setError] = useState("");
@@ -18,7 +23,8 @@ export default function TimeblockTable() {
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
 
-    async function fetchTimeblocks(searchTerm?: string) {
+
+    const fetchTimeblocks = useCallback(async (searchTerm?: string) => {
         try {
             const url = searchTerm ? `/timeblocks?search=${encodeURIComponent(searchTerm)}` : "/timeblocks";
             const response = await api.get(url);
@@ -27,12 +33,15 @@ export default function TimeblockTable() {
         } catch (err: any) {
             setError(err.response?.data?.error || "Error fetching timeblocks.");
         }
-    }
+    }, []);
 
     useEffect(() => {
         fetchTimeblocks();
-    }, []);
+    }, [fetchTimeblocks]);
 
+    useEffect(() => {
+        refreshRef.current = () => fetchTimeblocks();
+    }, [fetchTimeblocks, refreshRef]);
 
 
     async function deleteTimeblock(id: number) {
